@@ -1,4 +1,4 @@
-# youtube_translator
+# Youtube Translator
 Based on OpenAI's Translator, supports manual subtitles and automatically generated subtitles.
 
 ## Installation
@@ -28,5 +28,5 @@ pip install openai
 - **Talking-type videos shorter than 5 minutes perform well**, while long videos with excessive content may struggle to achieve sentence-to-sentence matching with the original text.
 - OpenAI's API is billed based on the number of tokens; please use it cautiously for super long videos.
 
-## Demo!
-[Demonstration](/images/demo.jpg)
+## Demo
+![Demonstration](/images/demo.jpg)
