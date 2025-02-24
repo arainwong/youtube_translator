@@ -1,0 +1,11 @@
+{
+    "api_key": "your-openai_api_key",
+    "model": "gpt-4o-mini",
+    "target_language": "中文",
+    "language_code": ["en", "de", "ja"], 
+
+    "save_transcripts": true, 
+
+    "subtile_color": "white",
+    "num_displayed_subtitles": 4 
+}
