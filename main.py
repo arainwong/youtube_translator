@@ -1,10 +1,12 @@
-# from youtube_transcript_api import YouTubeTranscriptApi
-# import re
+from youtube_transcript_api import YouTubeTranscriptApi
 from openai import OpenAI
 import time
 import json
+from translator import check_openai_api_key
 from translator import extract_video_id
 from translator import translate
+from translator import align_output
+from translator import save_transcripts
 
 # load config.json
 try:
@@ -16,7 +18,13 @@ except json.JSONDecodeError:
     print("Error: incorrect JSON format.")
 
 API_KEY = config['api_key']
+LANGUAGE_CODE = config['language_code']
+NUM_LINES_PER_TRANSLATION = config['num_lines_per_translation']
 SAVE_TRANSCRIPT = config['save_transcripts']
+
+while not check_openai_api_key(API_KEY):
+    API_KEY = input(f"Re-enter your OpenAI API key: ")
+
 client = OpenAI(api_key=API_KEY)
 
 while True:
@@ -30,25 +38,57 @@ while True:
         continue
     else:
         print(f"\nSuccessfully extract video ID: {video_id} \n")
-    
-    # fetch the manual or generated subtitles and translate to target language
+
+    # retrieve the available transcripts
+    # `TranscriptList` object which is iterable and provides methods to filter the list of transcripts for specific languages and types
+    transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
+    transcript = transcript_list.find_transcript(LANGUAGE_CODE)
+    # fetch subtitles, `TranscriptList` -> `Transcript`
+    transcript = transcript.fetch()
+
+    num_translations = len(transcript)//NUM_LINES_PER_TRANSLATION
+    if len(transcript) < NUM_LINES_PER_TRANSLATION:
+        NUM_LINES_PER_TRANSLATION = len(transcript)
     start_time = time.time() # record start time
-    print(f"Requesting translation, please wait a moment... \nHINT: a conversation-style video of about 10 minutes requires approximately 60 seconds of waiting time. \n")
-    formatted_transcript_lines, translation_lines = translate(config=config, video_id=video_id, client=client)
+    full_formatted_transcripts_list = [] # used for save transcripts
+    full_translations_list = [] # used for save translations
+    for i in range(num_translations + 1):
+        if i < num_translations:
+            formatted_transcript = "\n".join([
+                f"[{item['start']:.2f}s - {(transcript[NUM_LINES_PER_TRANSLATION * i + index + 1]['start'] if NUM_LINES_PER_TRANSLATION * i + index + 1 < len(transcript) else item['start'] + item['duration']):.2f}s] {item['text'].replace(chr(10), ' ')}"
+                for index, item in enumerate(transcript[NUM_LINES_PER_TRANSLATION * i:NUM_LINES_PER_TRANSLATION * (i+1)])
+            ])
+        else:
+            formatted_transcript = "\n".join([
+                f"[{item['start']:.2f}s - {(transcript[NUM_LINES_PER_TRANSLATION * i + index + 1]['start'] if NUM_LINES_PER_TRANSLATION * i + index + 1 < len(transcript) else item['start'] + item['duration']):.2f}s] {item['text'].replace(chr(10), ' ')}"
+                for index, item in enumerate(transcript[NUM_LINES_PER_TRANSLATION * i:])
+            ])
+
+        # translate the formatted_transcript in batches
+        if formatted_transcript.strip():  # avoid formatted_transcript is a empty string
+            
+            # print(f"Requesting translation, please wait a moment... \nHINT: a conversation-style video of about 10 minutes requires approximately 60 seconds of waiting time. \n")
+            translation = translate(config, client, formatted_transcript)
+
+            # format output
+            formatted_transcript_lines = formatted_transcript.split("\n")
+            translation_lines = translation.split("\n")
+
+            aligned_output = align_output(formatted_transcript_lines, translation_lines)
+                
+            print(f"{aligned_output}")
+            
+            full_formatted_transcripts_list.append(formatted_transcript)
+            full_translations_list.append(translation)
+    
     end_time = time.time()  # record end time
     elapsed_time = end_time - start_time  # calculate run time
 
-    # match the number of lines
-    min_lines = min(len(formatted_transcript_lines), len(translation_lines))
-    max_lines = max(len(formatted_transcript_lines), len(translation_lines))
+    full_formatted_transcripts = "\n".join(full_formatted_transcripts_list)
+    full_translations = "\n".join(full_translations_list)
 
-    # line-by-line concatenation of the corresponding translation
-    aligned_output1 = "\n".join([f"{formatted_transcript_lines[i]} \n{translation_lines[i]} \n" for i in range(min_lines)])
-    if len(formatted_transcript_lines) >= len(translation_lines):
-        aligned_output2 = "\n".join([f"{formatted_transcript_lines[i]} \n" for i in range(min_lines, max_lines)])
-    else:
-        aligned_output2 = "\n".join([f"{translation_lines[i]} \n" for i in range(min_lines, max_lines)])
-        
-    print(f"{aligned_output1} \n{aligned_output2}")
-    print(f"Time cost {elapsed_time:.2f}s.")
-    print(f"Transcripts saved in path 'saved_subtitles/{video_id}/'. \n" if SAVE_TRANSCRIPT else "")
+    if SAVE_TRANSCRIPT == True:
+        save_transcripts(video_id, full_formatted_transcripts, full_translations)
+        print(f"Transcripts saved in path 'saved_subtitles/{video_id}/'. \n" if SAVE_TRANSCRIPT else "")
+    
+    print(f"Time cost {elapsed_time:.2f}s. \n ")

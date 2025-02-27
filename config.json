@@ -1,9 +1,11 @@
 {
-    "api_key": "your-openai_api_key",
-    "model": "gpt-4o-mini",
+    "api_key": "your_openai_api_key",
+    "model": "gpt-4o",
     "target_language": "中文",
-    "language_code": ["en", "de", "ja"], 
+    "language_code": ["en", "de", "ja", "ko", "fr", "th"], 
 
+    "num_lines_per_translation": 16,
+    
     "save_transcripts": true, 
 
     "subtile_color": "white",
