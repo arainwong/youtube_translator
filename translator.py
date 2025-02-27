@@ -64,6 +64,12 @@ def translate(config, client, formatted_transcript: str):
 
     return translation
 
+def format_time(seconds):
+    """ Convert seconds to mm:ss format """
+    minutes = int(seconds // 60)
+    secs = int(seconds % 60)
+    return f"{minutes:02d}:{secs:02d}"  # mm:ss
+
 def align_output(formatted_transcript_lines: list, translation_lines: list):
     """
     Output:

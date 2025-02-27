@@ -3,9 +3,8 @@ from openai import OpenAI
 import time
 import json
 from translator import check_openai_api_key
-from translator import extract_video_id
-from translator import translate
-from translator import align_output
+from translator import extract_video_id, translate
+from translator import align_output, format_time
 from translator import save_transcripts
 
 # load config.json
@@ -55,12 +54,12 @@ while True:
     for i in range(num_translations + 1):
         if i < num_translations:
             formatted_transcript = "\n".join([
-                f"[{item['start']:.2f}s - {(transcript[NUM_LINES_PER_TRANSLATION * i + index + 1]['start'] if NUM_LINES_PER_TRANSLATION * i + index + 1 < len(transcript) else item['start'] + item['duration']):.2f}s] {item['text'].replace(chr(10), ' ')}"
+                f"[{format_time(item['start'])} - {format_time(transcript[NUM_LINES_PER_TRANSLATION * i + index + 1]['start']) if NUM_LINES_PER_TRANSLATION * i + index + 1 < len(transcript) else format_time(item['start'] + item['duration'])}] {item['text'].replace(chr(10), ' ')}"
                 for index, item in enumerate(transcript[NUM_LINES_PER_TRANSLATION * i:NUM_LINES_PER_TRANSLATION * (i+1)])
             ])
         else:
             formatted_transcript = "\n".join([
-                f"[{item['start']:.2f}s - {(transcript[NUM_LINES_PER_TRANSLATION * i + index + 1]['start'] if NUM_LINES_PER_TRANSLATION * i + index + 1 < len(transcript) else item['start'] + item['duration']):.2f}s] {item['text'].replace(chr(10), ' ')}"
+                f"[{format_time(item['start'])} - {format_time(transcript[NUM_LINES_PER_TRANSLATION * i + index + 1]['start']) if NUM_LINES_PER_TRANSLATION * i + index + 1 < len(transcript) else format_time(item['start'] + item['duration'])}] {item['text'].replace(chr(10), ' ')}"
                 for index, item in enumerate(transcript[NUM_LINES_PER_TRANSLATION * i:])
             ])
 
