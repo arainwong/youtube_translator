@@ -14,7 +14,7 @@ pip install openai
 ## How to use
 
 1. config.json
-    - `api_key`: You can but an API from [OpenAI API](https://platform.openai.com/api-keys).
+    - `api_key`: You can buy an API from [OpenAI API](https://platform.openai.com/api-keys).
     - `model`: Choose a model, you can find other models in [Document](https://platform.openai.com/docs/models#current-model-aliases).
     - `target_language`: Choose a target language.
     - `language_code`: The script will fetch a transcript from YouTube according to the given priority, e.g. ‘English’ > ‘German’ > ‘Japanese’. You can find more detail in [youtube-transcript-api](https://github.com/jdepoix/youtube-transcript-api).
